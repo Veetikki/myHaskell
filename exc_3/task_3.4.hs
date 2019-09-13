@@ -1,3 +1,12 @@
+--For each string in ss it computes a list of similar strings in ss (strings that are at most distance d from the string).
+findSimilar :: (String -> String -> Float) -> Float -> [String] -> [[String]]
+findSimilar f d ss = map (\x -> mostFilter f d x ss) ss
+
+--Task 3.3
+mostFilter :: (String -> String -> Float) -> Float -> String -> [String] -> [String]
+mostFilter f d z ss = filter (\x -> f z x <= d) ss
+
+--Tasks 3.2
 calculateFirstTask :: String -> String -> Float
 calculateFirstTask [] [] = 0.0
 calculateFirstTask x y = (countTimes x y + countTimes y x)/(fromIntegral(length x) + fromIntegral(length y))
