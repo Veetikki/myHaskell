@@ -1,3 +1,6 @@
+--I excepted that user knows right values for PhoneType
+
+
 --Let's make different types 
 --Using the data keyword, define PhoneType type that has constructors for values WorkLandline, PrivateMobile, WorkMobile, and Other.
 --Derive instance for Show, Eq and Read for it.
@@ -6,8 +9,8 @@ data PhoneType = WorkLandline | PrivateMobile | WorkMobile | Other deriving (Sho
 
 --Using the type keyword, define two type synonyms for Integer: CountryCode and PhoneNo.
 
-type CountryCode = Int
-type PhoneNo = Int
+type CountryCode = Integer
+type PhoneNo = Integer
 
 {--
 Then, using the record syntax, define Phone type for phone numbers that has only one value constructor with fields for
