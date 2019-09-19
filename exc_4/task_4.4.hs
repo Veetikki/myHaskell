@@ -31,9 +31,22 @@ listWithName r s = [ Record n p | (Record n p) <- r, n == s]
 {--
 -Add a new entry, given a string for the name, the three strings for the phone like in Task 4.3 and the list of phone book entries to add the new entry to. 
 If there already exists an entry with the given name and the given number(phoneNo field in Phone), then make no change.--}
+
+{--
+This will not add if there is record with same n and pNo
+So you can add record with same number and different name or with different number and same name  
+--}
 addRecord :: String -> String -> String -> String -> PhoneBook -> PhoneBook
 addRecord n pT cC pNo [] = [Record {name = n, phone = readPhone pT cC pNo}]
-addRecord n pT cC pNo p = let r = Record {name = n, phone = readPhone pT cC pNo} in if r `elem` p then error "already in list" else r : p
+addRecord n pT cC pNo p
+    | checkPhoneBook p Record {name = n, phone = readPhone pT cC pNo} == False = Record {name = n, phone = readPhone pT cC pNo} : p
+    | otherwise = error "Already in List"
+
+checkPhoneBook :: PhoneBook -> Record -> Bool
+checkPhoneBook [] _ = False
+checkPhoneBook ((Record n1 (Phone pT1 cC1 pNo1)) : xs) (Record n2 (Phone pT2 cC2 pNo2))
+    | n1 == n2 && pNo1 == pNo2 = True
+    | otherwise = checkPhoneBook xs (Record {name = n2, phone = Phone pT2 cC2 pNo2})
 
 --Taks 4.3
 readPhone :: String -> String -> String -> Phone
