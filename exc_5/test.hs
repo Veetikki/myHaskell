@@ -9,11 +9,11 @@ data PhoneType = WorkLandline | PrivateMobile | WorkMobile | Other deriving(Show
 data CountryCode  = MakeCountryCode Integer deriving(Eq,Read)
 data PhoneNo      = MakePhoneNo Integer deriving(Eq,Read)
 data Phone        = MakePhone {phoneType   :: Maybe PhoneType
-                              ,countryCode :: Maybe CountryCode
+                              ,countryCode :: CountryCode
                               ,phoneNo     :: PhoneNo    
                               } deriving(Eq, Read)
 
-toCountryCode :: Integer -> Maybe CountryCode
+toCountryCode :: Integer -> CountryCode
 toCountryCode x | x < 0 = error "Invalid country code."
                 | otherwise = MakeCountryCode x
                   
@@ -24,7 +24,7 @@ toPhoneNo x | x < 0 = error "Invalid phone number."
 {- This is actually the same as the data/value constructor for Phone. You can try :t MakePhone in ghci to see the type of the data/value constructor.
 -}
 toPhone :: Maybe PhoneType
-          -> Maybe CountryCode
+          -> CountryCode
           -> PhoneNo
           -> Phone
 toPhone pt cc pn = MakePhone pt cc pn

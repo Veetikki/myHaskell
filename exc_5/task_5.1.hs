@@ -10,7 +10,7 @@ Take task 4.3 (You can use the example solution) and make the following changes 
 
 --Taks 4.3
 readPhone :: String -> String -> String -> Phone
-readPhone pT cC pNo = Phone { phoneType = read pT :: PhoneType, countryCode = fixCc(cC), phoneNo = makePhoneNo(read pNo :: Integer) }
+readPhone pT cC pNo = Phone { phoneType = read pT, countryCode = fixCc(cC), phoneNo = makePhoneNo(read pNo :: Integer) }
 
 fixCc :: String -> CountryCode
 fixCc (s1:s2:ss)
@@ -65,7 +65,7 @@ and phoneNo :: PhoneNo. (This time a type of its own)
 
 data Phone = Phone {
     phoneType :: Maybe PhoneType,
-    countryCode :: Maybe CountryCode,
+    countryCode :: CountryCode,
     phoneNo :: PhoneNo
     } deriving (Eq)
 
@@ -89,5 +89,5 @@ So, I excepted that you need to create your own Countrycodes e.g. let a = makeCo
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 --}
 
-myFunc :: Maybe PhoneType -> Maybe CountryCode -> PhoneNo -> Phone
+myFunc :: Maybe PhoneType -> CountryCode -> PhoneNo -> Phone
 myFunc pT cC pNo = Phone {phoneType = pT, countryCode = cC, phoneNo = pNo}
