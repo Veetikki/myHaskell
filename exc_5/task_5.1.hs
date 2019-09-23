@@ -9,8 +9,12 @@ Take task 4.3 (You can use the example solution) and make the following changes 
 
 
 --Taks 4.3
+--Could be done differently with toPhone function
 readPhone :: String -> String -> String -> Phone
-readPhone pT cC pNo = Phone { phoneType = read pT, countryCode = fixCc(cC), phoneNo = makePhoneNo(read pNo :: Integer) }
+readPhone [] [] pNo = Phone { phoneType = Nothing, countryCode = Nothing, phoneNo = makePhoneNo(read pNo :: Integer) }
+readPhone [] cC pNo = Phone { phoneType = Nothing, countryCode = (Just (fixCc(cC))), phoneNo = makePhoneNo(read pNo :: Integer) }
+readPhone pT [] pNo = Phone { phoneType = (Just (read pT)), countryCode = Nothing, phoneNo = makePhoneNo(read pNo :: Integer) }
+readPhone pT cC pNo = Phone { phoneType = (Just (read pT)), countryCode = (Just (fixCc(cC))), phoneNo = makePhoneNo(read pNo :: Integer) }
 
 fixCc :: String -> CountryCode
 fixCc (s1:s2:ss)
@@ -65,7 +69,7 @@ and phoneNo :: PhoneNo. (This time a type of its own)
 
 data Phone = Phone {
     phoneType :: Maybe PhoneType,
-    countryCode :: CountryCode,
+    countryCode :: Maybe CountryCode,
     phoneNo :: PhoneNo
     } deriving (Eq)
 
@@ -73,7 +77,10 @@ data Phone = Phone {
 <country code><space><phone number><space><phone type in parenthesis>
 e.g. +358 123456789 (WorkLandline)--}
 instance Show Phone where
-    show (Phone pT cC pNo) = show (cC) ++ " " ++ show (pNo) ++ " (" ++ show(pT) ++ ")"
+    show (Phone Nothing Nothing pNo) = show (pNo)
+    show (Phone Nothing (Just cC) pNo) = show (cC) ++ " " ++ show (pNo)
+    show (Phone (Just pT) Nothing pNo) = show (pNo) ++ " (" ++ show(pT) ++ ")"
+    show (Phone (Just pT) (Just cC) pNo) = show (cC) ++ " " ++ show (pNo) ++ " (" ++ show(pT) ++ ")"
 {--
 Make a function of type
 :: PhoneType
@@ -89,5 +96,6 @@ So, I excepted that you need to create your own Countrycodes e.g. let a = makeCo
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 --}
 
-myFunc :: Maybe PhoneType -> CountryCode -> PhoneNo -> Phone
-myFunc pT cC pNo = Phone {phoneType = pT, countryCode = cC, phoneNo = pNo}
+
+toPhone :: Maybe PhoneType -> Maybe CountryCode -> PhoneNo -> Phone
+toPhone pT cC pNo = Phone pT cC pNo

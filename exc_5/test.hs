@@ -23,11 +23,11 @@ toPhoneNo x | x < 0 = error "Invalid phone number."
               
 {- This is actually the same as the data/value constructor for Phone. You can try :t MakePhone in ghci to see the type of the data/value constructor.
 -}
-toPhone :: Maybe PhoneType
+toPhone :: PhoneType
           -> CountryCode
           -> PhoneNo
           -> Phone
-toPhone pt cc pn = MakePhone pt cc pn
+toPhone pt cc pn = MakePhone (Just pt) cc pn
 
 -- Type constructor |
 --                  |
