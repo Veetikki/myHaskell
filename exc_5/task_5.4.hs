@@ -11,13 +11,18 @@ class Eq3 a where
     (===) :: a -> a -> Bool3
 
 instance Eq3 Bool3 where
-    True3 === True3 = True3
-    True3 === False3 = False3
-    False3 === False3 = True3
-    False3 === True3 = False3 
+    True3   === True3 = True3
+    False3  === False3 = True3
+    Unk3    === Unk3 = Unk3
+    True3   === Unk3 = Unk3
+    False3  === Unk3 = Unk3
+    Unk3    === True3 = Unk3
+    Unk3    === False3 = Unk3
+    _       === _ = False3 
 
-instance Eq3 (MaybeNull m) where
-    Null === Null = Unk3
+instance (Eq3 a) => Eq3 (MaybeNull a) where
+    JustVal x   === JustVal y   = x === y
+    Null        === Null        = Unk3
 
 -- MaybeNull:
 

@@ -28,7 +28,7 @@ examplePhoneBook =
   $ addEntry "PersonA" "WorkMobile"    "358"    "987654321"
   $ addEntry "PersonB" "WorkLandline"  "358"    "2323"        --And so on..
   $ addEntry "PersonB" "Other"         "+358"   "144"         --Now this call gets the phone book that is constructed below.
-  $ addEntry "PersonC" "WorkLandline"  "358"    "12312123" $ Map.empty --This line is evaluated first
+  $ addEntry "PersonC" "WorkLandline"  "358"    "12312123" Map.empty --This line is evaluated first
 
 --Add entry to map if with same name then it adds value to the list
 addEntry :: String -> String -> String -> String -> PhoneBook -> PhoneBook
