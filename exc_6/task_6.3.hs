@@ -16,9 +16,10 @@ bye
 --}
 
 import Control.Monad
-
+import System.IO
 main = do
     putStr("calculate> ")
+    hFlush stdout
     line <- getLine
     askForCalculate line
     putStrLn("bye!")
@@ -28,6 +29,7 @@ askForCalculate line = do
     when (line /= "quit") $ do 
         checkInput line
         putStr("calculate> ")
+        hFlush stdout
         newLine <- getLine
         askForCalculate newLine
 
