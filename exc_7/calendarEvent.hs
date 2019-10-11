@@ -29,86 +29,145 @@ I do not understand that. I understand the following:
 
 --}
 
+-- THE FOLLOWING WILL STILL CHANGE SLIGHTLY, AND WE WILL PROVIDE A TEMPLATE FOR doCOmmand
+-- The idea anyway is that doCommand will eventually call loop with the updated event list
+import System.IO
+import Data.List (sortBy) --For sorting events
+
 data EventInfo = EventInfo { name :: String
                            , place :: String
                            , date :: Date
                            } deriving(Eq)
-main = loop []
-  
-loop :: [EventInfo] -> IO ()
 
-loop events =
+instance Show EventInfo where
+  show(EventInfo n p d) =  "Event " ++ n ++ " happens at " ++ p ++" on " ++ show(d)
+
+main = loop $ return []
+  
+loop :: IO [EventInfo] -> IO ()
+
+loop ioEvents =
   do
     input <- getLine
-    loop (doCommand input events) 
+    if input == "Quit"
+    then putStrLn("bye")
+    else doCommand input ioEvents
 
-doCommand :: String -> [EventInfo] -> [EventInfo]
-doCommand input events
-    | (length inputl == 6) = doEvent inputl events
-    | (length inputl == 2 && (head inputl) == "Tell me about ") = doTell inputl events 
-    | ((length inputl == 2) && (head inputl) == "What happens on ") = doHappensOn inputl events
-    | ((length inputl == 2) && (head inputl) == "What happens at ") = doHappensAt inputl events
-    | (length == 4) = doHappensAtOn inputl events
-    | otherwise = events
+doCommand :: String -> IO [EventInfo] -> IO ()
+doCommand input ioEvents 
+    | (length inputl == 6) = do --we check on other function that all others are correct 
+      events <- ioEvents
+      newEvents <- (doEvent inputl events) 
+      loop $ return newEvents
+    | (length inputl == 2 && (head inputl) == "Tell me about ") = do --Tell me about command
+      events <- ioEvents
+      doTell (last inputl) events
+      loop $ return events 
+    | ((length inputl == 2) && (head inputl) == "What happens on ") = do --What happens on
+      events <- ioEvents
+      doHappensOn (last inputl) events
+      loop $ return events
+    | ((length inputl == 2) && (head inputl) == "What happens at ") = do --What happens at
+      events <- ioEvents
+      doHappensAt (last inputl) events
+      loop $ return events  
+    | otherwise = do --Otherwise command is not valid
+      events <- ioEvents
+      printError
+      loop $ return events
     where inputl = (splitStr input '\'')
 
+
+--This splits given String by given Char
 splitStr :: String -> Char -> [String]
 splitStr [] _ = []
-splitStr s c = x : splitStr (drop 1 y) c where (x,y) = span (/= c) s
+splitStr s c = x : splitStr (drop 1 y) c where (x,y) = span (/= c) s --cut the string when we find given char
 
-doEvent :: [String] -> [EventInfo] -> [EventInfo]
-doEvent [] _ = []
+sortDate (EventInfo n1 p1 d1) (EventInfo n2 p2 d2) = compare d1 d2 --helper function for sortby to sort with date
+
+sortName (n1,d1) (n2,d2) = compare n1 n2 --helper for sorting by name
+
+--Function to Tell me about command
+doTell :: String -> [EventInfo] -> IO ()
+doTell [] events = do putStrLn("I do not know of such event")
+doTell _ [] = do putStrLn("I do not know of such event")
+doTell event events = let l = [(EventInfo n p d) | (EventInfo n p d) <- events, event == n] in if length l == 1 then putStrLn(show $ head l) else putStrLn("I do not know of such event") --There only must be one eventinfo for every eventname
+
+doHappensOn :: String -> [EventInfo] -> IO ()
+doHappensOn _ [] = do putStrLn("Nothing that I know of")
+doHappensOn [] _ = do putStrLn("Nothing that I know of")
+doHappensOn time events = let l = [(n, d) | EventInfo n p d <- events, time == show(d)] in if length l /= 0 then printEvents $ (sortBy sortName l) else putStrLn("Nothing that I know of") --we wanted to sort these ones by name
+      where printEvents :: [(String, Date)] -> IO () --prints all events
+            printEvents [] = putStr("")
+            printEvents (e:es) = do
+              putStrLn("Event " ++ fst e ++ " happens on " ++ show(snd e))
+              printEvents es
+
+doHappensAt :: String -> [EventInfo] -> IO ()
+doHappensAt _ [] = do putStrLn("Nothing that I know of")
+doHappensAt [] _ = do putStrLn("Nothing that I know of")
+doHappensAt place events = let l = [(n, p) | EventInfo n p d <- (sortBy sortDate events), p == place]in if length l /= 0 then printEvents l else putStrLn("Nothing that I know of") --we sort theses ones by date
+      where printEvents :: [(String, String)] -> IO () --prints events
+            printEvents [] = putStr("")
+            printEvents (e:es) = do
+              putStrLn("Event " ++ fst e ++ " happens at " ++ snd e)
+              printEvents es
+
+--Adds events to list
+doEvent :: [String] -> [EventInfo] -> IO [EventInfo]
+doEvent [] events = do return events
 doEvent (s1:s2:s3:s4:s5:s6:_) events
-    | s1 == "Event " && s3 == " happens at " && s5 == " on " = let d = parseDate s6 in if(d /= Nothing) then (EventInfo {name = s2, place = s4, date = (fromJust d)}) : events else events
-    | otherwise = events
-    where fromJust :: Maybe a -> a
+    | s1 == "Event " && s3 == " happens at " && s5 == " on " = let d = parseDate s6 --check that command is valid and we want to parse given date and check that it is valid
+      in if(d /= Nothing) 
+          then do
+            putStrLn("Done")
+            return ((EventInfo {name = s2, place = s4, date = (fromJust d)}) : (removeEvent s2 events)) --we want to make sure that we remove old data
+        else do
+          putStrLn("Bad day")
+          return events
+    | otherwise = do
+      printError
+      return events
+    where fromJust :: Maybe a -> a --removes just
           fromJust Nothing  = error "Maybe.fromJust: Nothing"
           fromJust (Just x) = x
 
-doTell :: [String] -> [EventInfo] -> EventInfo
+--removes with given name
+removeEvent :: String -> [EventInfo] -> [EventInfo]
+removeEvent s events = [EventInfo n p d | (EventInfo n p d) <- events, n /= s]
+
+--Prints if not valid command
+printError :: IO ()
+printError = do 
+  putStrLn("I do not understand that. I understand the following:")
+  putStrLn("*Event <name> happens at <place> on <date>")
+  putStrLn("*Tell me about <eventname>")
+  putStrLn("*What happens on <date>")
+  putStrLn("*What happens at <place>")
+  putStrLn("*Quit")
 
 readMaybe :: (Read a) => String -> Maybe a  
 readMaybe st = case reads st of [(x,"")] -> Just x
                                 _ -> Nothing 
-    
+--Parses date    
 parseDate :: String -> Maybe Date
-parseDate s = let ss = words (map (\x -> if (x == '-') then ' ' else x) s) in if (length ss /= 3) then Nothing else readDate (ss!!0) (ss!!1) (ss!!2)
+parseDate s = let ss = words (map (\x -> if (x == '-') then ' ' else x) s) in if (length ss /= 3) then Nothing else readDate (ss!!0) (ss!!1) (ss!!2) --replace '-' with ' ' then take words
 
+--reads date with string
 readDate :: String -> String -> String -> Maybe Date
 readDate strY strM strD
-    | correctDate y m d = Just Date { year = toYear y, month = toMonth m, day = toDay d }
+    | correctDate y m d = Just (makeDate y m d)
     | otherwise = Nothing
         where
             y = read strY :: Integer
             m = read strM :: Integer
             d = read strD :: Integer
 
+data Month = MakeMonth Integer deriving (Eq, Ord)
 
--- date?
-
--- Note: this is not a complete implementation for dates.
--- This is just a data type example.
-
--- The naive approach: (I use ' in the names not to confuse with stuff later
--- This is really no safer than (Int,Int,Int) or (Integer, Integer, Integer)
--- To change the types you only go to one place (the type definition)
--- but nothing stops you from mixing up days, months and years
--- between themselves and other Int-typed variables
--- Load this file and try the following (without --): 
--- Date' (2 :: Month') (2 :: Month') (2 :: Month')
-
-
-type Year' = Integer
-type Month' = Integer
-type Day' = Integer
-
-data Date' = Date' { year' :: Year', month' :: Month', day' :: Day' } deriving (Eq, Show, Ord)
-
--- "data" wraps data inside a wrapper that makes it different
--- from other types:
-
-data Month = MakeMonth Integer deriving (Eq, Show, Ord)
-
+--instance to make rigth show
+instance Show Month where
+  show(MakeMonth m) = show(m)
 -- If all values are ok, it is enough to call "MakeMonth x"
 -- Now the input is an Integer. What if it was a String?
 -- - then MakeMonth (read x :: Integer) would do it
@@ -122,7 +181,10 @@ fromMonth             :: Month -> Integer
 fromMonth (MakeMonth i) = i  -- Pattern match i out 
 
 -- This is done similarly as Month
-data Day = MakeDay Integer deriving (Eq, Show, Ord)
+data Day = MakeDay Integer deriving (Eq, Ord)
+
+instance Show Day where
+  show(MakeDay d) = show(d)
 
 toDay               :: Integer -> Day
 toDay x
@@ -133,32 +195,10 @@ toDay x
 fromDay             :: Day -> Integer
 fromDay (MakeDay i) = i 
 
-{- this would take care of year 0. I have commented this out
-   since I will use "newtype" to demonstrate it.
+newtype Year = MakeYear Integer deriving (Eq, Ord)
 
-data Year = MakeYear Integer deriving (Eq, Show)
-
-toYear               :: Integer -> Year
-toYear x
-  | x == 0     = error "No year 0" 
-  | otherwise = MakeYear x
-
-fromYear             :: Year -> Integer
-fromYear (MakeYear i) = i  
-
-instance Num Year where
-    fromInteger         = toYear
-    x + y               = toYear $ fromYear x + fromYear y 
-    x - y               = toYear $ fromYear x - fromYear y 
-    x * y               = toYear $ fromYear x * fromYear y
-
--}
-
-
--- This does not take care of year 0 ie it allows it
--- But this is straightforward
-
-newtype Year = MakeYear Integer deriving (Eq, Show, Ord)
+instance Show Year where
+  show(MakeYear y) = show y
 
 toYear :: Integer -> Year
 toYear x
@@ -172,8 +212,13 @@ fromYear (MakeYear x) = x
 -- that are used in the functions below. The record field names
 -- year, month and day are also used in assignign values - see below.
 
-data Date = Date { year :: Year, month :: Month, day :: Day } deriving (Eq, Show, Ord)
+data Date = Date { year :: Year, month :: Month, day :: Day } deriving (Eq, Ord)
 
+--this adds zeros if date or moth is less than 10
+instance Show Date where
+  show(Date y m d) = show(y) ++ "-" ++ m' ++ "-" ++ d'
+    where m' = if (m < 10 ) then "0" ++ show(m) else show(m)
+          d' = if (d < 10 ) then "0" ++ show(d) else show(d)
 -- Examples of applications of the types:
 
 -- A function to check if a year is a leap year
@@ -183,21 +228,6 @@ leapYear (MakeYear y)
   | mod y 100 == 0 = False
   | mod y 4 == 0 = True
   | otherwise = False
-
-
-makeMaybeDate :: Integer -> Integer -> Integer -> Maybe Date
-makeMaybeDate y m d
- | y == 0 = Nothing
- | elem m [1,3,5,7,8,10,12] &&
-   elem d [1..31] = makeJustDate y m d
- | elem m [4,6,9,11] &&
-   (elem d [1..30]) = makeJustDate y m d
- | m==2 && elem d [1..28] = makeJustDate y m d
- | leapYear (toYear y) && m==2 && d==29 = makeJustDate y m d
- | otherwise = Nothing
- where makeJustDate y m d = Just Date {year = toYear y, month = toMonth m, day = toDay d}
-
-
 
 -- 3: Write a function to check if a given date (y,m,d)
 --    is correct
