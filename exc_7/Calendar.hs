@@ -34,24 +34,9 @@ I do not understand that. I understand the following:
 import System.IO
 import Data.List (sortBy) --For sorting events
 
-data EventInfo = EventInfo { name :: String
-                           , place :: String
-                           , date :: Date
-                           } deriving(Eq)
 
 instance Show EventInfo where
   show(EventInfo n p d) =  "Event " ++ n ++ " happens at " ++ p ++" on " ++ show(d)
-
-main = loop $ return []
-  
-loop :: IO [EventInfo] -> IO ()
-
-loop ioEvents =
-  do
-    input <- getLine
-    if input == "Quit"
-    then putStrLn("bye")
-    else doCommand input ioEvents
 
 doCommand :: String -> IO [EventInfo] -> IO ()
 doCommand input ioEvents 
@@ -83,7 +68,8 @@ splitStr :: String -> Char -> [String]
 splitStr [] _ = []
 splitStr s c = x : splitStr (drop 1 y) c where (x,y) = span (/= c) s --cut the string when we find given char
 
-sortDate (EventInfo n1 p1 d1) (EventInfo n2 p2 d2) = compare d1 d2 --helper function for sortby to sort with date
+--This wasn't needed any more since description changed
+--sortDate (EventInfo n1 p1 d1) (EventInfo n2 p2 d2) = compare d1 d2 --helper function for sortby to sort with date
 
 sortName (n1,d1) (n2,d2) = compare n1 n2 --helper for sorting by name
 
@@ -106,7 +92,7 @@ doHappensOn time events = let l = [(n, d) | EventInfo n p d <- events, time == s
 doHappensAt :: String -> [EventInfo] -> IO ()
 doHappensAt _ [] = do putStrLn("Nothing that I know of")
 doHappensAt [] _ = do putStrLn("Nothing that I know of")
-doHappensAt place events = let l = [(n, p) | EventInfo n p d <- (sortBy sortDate events), p == place]in if length l /= 0 then printEvents l else putStrLn("Nothing that I know of") --we sort theses ones by date
+doHappensAt place events = let l = [(n, p) | EventInfo n p d <- events, p == place]in if length l /= 0 then printEvents $ (sortBy sortName l) else putStrLn("Nothing that I know of") --we sort theses ones by date
       where printEvents :: [(String, String)] -> IO () --prints events
             printEvents [] = putStr("")
             printEvents (e:es) = do
@@ -120,10 +106,10 @@ doEvent (s1:s2:s3:s4:s5:s6:_) events
     | s1 == "Event " && s3 == " happens at " && s5 == " on " = let d = parseDate s6 --check that command is valid and we want to parse given date and check that it is valid
       in if(d /= Nothing) 
           then do
-            putStrLn("Done")
+            putStrLn("ok")
             return ((EventInfo {name = s2, place = s4, date = (fromJust d)}) : (removeEvent s2 events)) --we want to make sure that we remove old data
         else do
-          putStrLn("Bad day")
+          putStrLn("Bad date")
           return events
     | otherwise = do
       printError
